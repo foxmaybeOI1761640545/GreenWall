@@ -1104,3 +1104,57 @@ export function getPatternById(id: string): CharacterPattern | undefined {
 export function gridToBoolean(grid: number[][]): boolean[][] {
   return grid.map((row) => row.map((cell) => cell === 1));
 }
+
+/**
+ * 将文本转换为合并的网格图案
+ * @param text 输入文本
+ * @param spacing 字符间距（列数），默认为 1
+ */
+export function textToGrid(text: string, spacing: number = 1): number[][] {
+  if (!text) return [];
+
+  // 初始化 7 行的空数组
+  const combinedGrid: number[][] = Array(7)
+    .fill(null)
+    .map(() => []);
+
+  // 遍历每个字符
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    // 处理空格：添加 3 列空白
+    if (char === ' ') {
+      for (let row = 0; row < 7; row++) {
+        for (let s = 0; s < 3; s++) combinedGrid[row].push(0);
+      }
+      continue;
+    }
+
+    // 获取字符图案
+    const pattern = getPatternById(char);
+    let gridToAdd: number[][];
+
+    if (pattern) {
+      gridToAdd = pattern.grid;
+    } else {
+      // 未知字符：添加 5 列空白作为占位
+      gridToAdd = Array(7).fill(Array(5).fill(0));
+    }
+
+    // 添加字符网格
+    for (let row = 0; row < 7; row++) {
+      // 如果 pattern 行数不足 7，补 0（理论上不会发生）
+      const rowData = gridToAdd[row] || Array(gridToAdd[0]?.length || 5).fill(0);
+      combinedGrid[row].push(...rowData);
+    }
+
+    // 如果不是最后一个字符，添加间距
+    if (i < text.length - 1) {
+      for (let row = 0; row < 7; row++) {
+        for (let s = 0; s < spacing; s++) combinedGrid[row].push(0);
+      }
+    }
+  }
+
+  return combinedGrid;
+}

@@ -16,6 +16,7 @@ type Props = {
   onReset?: () => void;
   onFillAllGreen?: () => void;
   onOpenRemoteRepoModal?: () => void;
+  onOpenTextModal?: () => void;
   canCreateRemoteRepo?: boolean;
   isGeneratingRepo?: boolean;
   onExportContributions?: () => void;
@@ -42,6 +43,7 @@ export const CalendarControls: React.FC<Props> = ({
   onReset,
   onFillAllGreen,
   onOpenRemoteRepoModal,
+  onOpenTextModal,
   canCreateRemoteRepo = false,
   isGeneratingRepo,
   onExportContributions,
@@ -302,7 +304,7 @@ export const CalendarControls: React.FC<Props> = ({
 
       {/* Row 2: character tool + import/export */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-        <div className="flex w-full flex-col gap-2 md:flex-1">
+        <div className="grid w-full grid-cols-2 gap-2 md:flex-1">
           <button
             type="button"
             onClick={handleCharacterButtonClick}
@@ -317,6 +319,15 @@ export const CalendarControls: React.FC<Props> = ({
             }
           >
             {previewMode ? t('characterSelector.cancelPreview') : t('characterSelector.character')}
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenTextModal}
+            className="flex w-full items-center justify-center gap-2 rounded-none border border-black bg-white px-3 py-2 text-sm font-medium text-black transition-all duration-200 hover:bg-gray-100"
+            title={t('textModal.title')}
+          >
+            {t('textModal.title')}
           </button>
         </div>
 

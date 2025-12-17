@@ -2,12 +2,13 @@ import React from 'react';
 import clsx from 'clsx';
 import styles from './ContributionCalendar.module.scss';
 import { CalendarControls } from './CalendarControls';
+import { TextToPatternModal } from './TextToPatternModal';
 import RemoteRepoModal, { RemoteRepoPayload } from './RemoteRepoModal';
 import { GenerateRepo, ExportContributions, ImportContributions } from '../../wailsjs/go/main/App';
 import { main } from '../../wailsjs/go/models';
 import { useTranslations } from '../i18n';
 import { WindowIsMaximised, WindowIsFullscreen } from '../../wailsjs/runtime/runtime';
-import { getPatternById, gridToBoolean } from '../data/characterPatterns';
+import { getPatternById, gridToBoolean, textToGrid } from '../data/characterPatterns';
 import { useContributionHistory } from '../hooks/useContributionHistory';
 
 // 根据贡献数量计算level
@@ -99,6 +100,7 @@ function ContributionCalendar({
   const [lastHoveredDate, setLastHoveredDate] = React.useState<string | null>(null);
   const [isGeneratingRepo, setIsGeneratingRepo] = React.useState<boolean>(false);
   const [isRemoteModalOpen, setIsRemoteModalOpen] = React.useState<boolean>(false);
+  const [isTextModalOpen, setIsTextModalOpen] = React.useState<boolean>(false);
   const [isMaximized, setIsMaximized] = React.useState<boolean>(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [containerVars, setContainerVars] = React.useState<ContainerVars>({});
@@ -262,6 +264,22 @@ function ContributionCalendar({
     setPreviewMode(true);
     // 清除粘贴预览状态，避免冲突
     setPastePreviewActive(false);
+    setPastePreviewDates(new Set());
+  }, []);
+
+  // 处理文本生成图案
+  const handleTextToPattern = React.useCallback((text: string) => {
+    const grid = textToGrid(text);
+    if (grid.length === 0 || grid[0].length === 0) return;
+
+    setIsTextModalOpen(false);
+    setSelectionBuffer({
+      width: grid[0].length,
+      height: grid.length,
+      data: grid,
+    });
+    setCopyMode(true);
+    setPastePreviewActive(true);
     setPastePreviewDates(new Set());
   }, []);
 
@@ -794,6 +812,65 @@ function ContributionCalendar({
       return;
     }
 
+    // 如果处于粘贴预览模式，点击确认粘贴
+    if (copyMode && pastePreviewActive && selectionBuffer) {
+      const { data } = selectionBuffer;
+      const clickedDate = new Date(dateStr);
+
+      setUserContributions((prev) => {
+        const newMap = new Map(prev);
+
+        // 获取所有涉及的日期
+
+        // 找到点击日期在日历中的位置
+        const yearStart = new Date(year, 0, 1);
+        const daysSinceYearStart = Math.floor(
+          (clickedDate.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        const firstDayOfWeek = yearStart.getDay();
+        const startWeek = Math.floor((daysSinceYearStart + firstDayOfWeek) / 7);
+        const startRow = clickedDate.getDay();
+
+        // 遍历 pattern 数据
+        data.forEach((row, r) => {
+          row.forEach((val, c) => {
+            if (val === 1) {
+              // 计算目标日期
+              // 目标行 = startRow + r - (patternHeight / 2) -> 居中粘贴
+              // 目标列 = startWeek + c - (patternWidth / 2)
+
+              // 但这里我们使用直接粘贴（左上角对齐或者鼠标位置对齐）
+              // 这里实现为：鼠标点击位置为图案左上角
+              const targetRow = startRow + r;
+              const targetWeek = startWeek + c;
+
+              if (targetRow >= 0 && targetRow < 7 && targetWeek >= 0 && targetWeek < 53) {
+                // 反算日期
+                const dayIndex = targetWeek * 7 + targetRow - firstDayOfWeek;
+                const targetDate = new Date(year, 0, 1 + dayIndex);
+
+                // 简单的日期格式化 YYYY-MM-DD
+                const y = targetDate.getFullYear();
+                const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+                const d = String(targetDate.getDate()).padStart(2, '0');
+                const dateString = `${y}-${m}-${d}`;
+
+                if (y === year) {
+                  newMap.set(dateString, 4); // 默认使用较深颜色
+                }
+              }
+            }
+          });
+        });
+
+        return newMap;
+      });
+
+      // 粘贴后保持在复制模式，方便连续粘贴
+      return;
+    }
+
     setIsDrawing(true);
     setLastHoveredDate(dateStr);
     handleTileAction(dateStr, drawMode);
@@ -948,6 +1025,7 @@ function ContributionCalendar({
     computeSelectionDates,
     pushSnapshot,
     setUserContributions,
+    t,
   ]);
 
   const tiles = filteredContributions.map((c, i) => {
@@ -1167,6 +1245,8 @@ function ContributionCalendar({
             onStartCharacterPreview={handleStartCharacterPreview}
             previewMode={previewMode}
             onCancelCharacterPreview={handleCancelCharacterPreview}
+            // 文本生成相关
+            onOpenTextModal={() => setIsTextModalOpen(true)}
             penMode={penMode}
             onPenModeChange={setPenMode}
             // 复制模式
@@ -1200,6 +1280,12 @@ function ContributionCalendar({
           onSubmit={handleRemoteModalSubmit}
         />
       )}
+
+      <TextToPatternModal
+        open={isTextModalOpen}
+        onSubmit={handleTextToPattern}
+        onClose={() => setIsTextModalOpen(false)}
+      />
     </div>
   );
 }

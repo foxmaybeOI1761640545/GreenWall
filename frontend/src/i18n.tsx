@@ -116,6 +116,14 @@ type TranslationDict = {
     cancelPreview: string;
     character: string;
   };
+  textModal: {
+    title: string;
+    description: string;
+    placeholder: string;
+    generate: string;
+    cancel: string;
+    preview: string;
+  };
   months: string[];
   weekdays: {
     mon: string;
@@ -280,6 +288,15 @@ const translations: Record<Language, TranslationDict> = {
       cancelPreview: 'Cancel Preview',
       character: 'Character',
     },
+    textModal: {
+      title: 'Text to Pattern',
+      description:
+        'Enter text to generate pixel patterns. The generated pattern will be copied to clipboard, click on calendar to paste.',
+      placeholder: 'Enter text here...',
+      generate: 'Generate & Copy',
+      cancel: 'Cancel',
+      preview: 'Preview',
+    },
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     weekdays: {
       mon: 'Mon',
@@ -438,6 +455,14 @@ const translations: Record<Language, TranslationDict> = {
       previewTooltip: '预览字符: {{char}}',
       cancelPreview: '取消预览',
       character: '字符',
+    },
+    textModal: {
+      title: '文本生成图案',
+      description: '输入文本以生成像素图案。生成的图案将被复制到剪贴板，点击日历即可粘贴。',
+      placeholder: '在此输入文本...',
+      generate: '生成并复制',
+      cancel: '取消',
+      preview: '预览',
     },
     months: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
     weekdays: {
